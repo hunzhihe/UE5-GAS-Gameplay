@@ -8,7 +8,12 @@ AAureBaseCharacter::AAureBaseCharacter()
 {
  	// Set this character to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
-
+	//武器组件，创建默认子对象
+    Weapon = CreateDefaultSubobject<USkeletalMeshComponent>("Weapon");
+	//设置附件，将其附加到网格体上并连接到插槽
+	Weapon->SetupAttachment(GetMesh(),FName(TEXT("WeaponHandSocket")));
+	//设置碰撞：无
+	Weapon->SetCollisionEnabled(ECollisionEnabled::NoCollision);
 }
 
 // Called when the game starts or when spawned

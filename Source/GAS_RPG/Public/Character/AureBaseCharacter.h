@@ -19,6 +19,9 @@ protected:
 	
 	virtual void BeginPlay() override; 
 
+	//指针变量：武器组件
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	TObjectPtr<USkeletalMeshComponent> Weapon;
 //public:	
 	// Called every frame
 	//virtual void Tick(float DeltaTime) override;

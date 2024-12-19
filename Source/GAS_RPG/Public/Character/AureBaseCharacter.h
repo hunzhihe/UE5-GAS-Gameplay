@@ -6,13 +6,15 @@
 //#include "AbilitySystemInterface.h"
 #include "AbilitySystemInterface.h"
 #include "AttributeSet.h"
+#include "GameplayEffect.h"
 #include "GameFramework/Character.h"
+#include "Interaction/CombatInterface.h"
 #include "AureBaseCharacter.generated.h"
 
 class UAbilitySystemComponent;
 class UAttributeSet;
 UCLASS()
-class GAS_RPG_API AAureBaseCharacter : public ACharacter ,public IAbilitySystemInterface 
+class GAS_RPG_API AAureBaseCharacter : public ACharacter ,public IAbilitySystemInterface ,public ICombatInterface
 {
 	GENERATED_BODY()
 
@@ -21,6 +23,7 @@ public:
 	AAureBaseCharacter();
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
     UAttributeSet* GetAttributeSet()const {return AttributeSet;}
+	
 protected:
 	
 	virtual void BeginPlay() override; 
@@ -34,11 +37,18 @@ protected:
 
 	UPROPERTY()
 	TObjectPtr<UAttributeSet> AttributeSet;
-//public:	
-	// Called every frame
-	//virtual void Tick(float DeltaTime) override;
 
-	// Called to bind functionality to input
-	//virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void  InitAbilityActorInfo();
 
+	UPROPERTY(BlueprintReadOnly,EditAnywhere,Category="Attributes")
+	TSubclassOf<UGameplayEffect> DefaultPrimaryAttributes;
+
+	UPROPERTY(BlueprintReadOnly,EditAnywhere,Category="Attributes")
+	TSubclassOf<UGameplayEffect> DefaultSecondaryAttributes;
+
+
+	void ApplyEffectToSelf(const TSubclassOf<UGameplayEffect>& GameplayEffectClass, float Level) const;
+	
+	void InitializeDefaultAttributes() const;
+     
 };

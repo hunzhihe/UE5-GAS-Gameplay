@@ -2,7 +2,9 @@
 
 
 #include "Character/AureBaseCharacter.h"
+//#include ""
 
+#include "AbilitySystemComponent.h"
 // Sets default values
 AAureBaseCharacter::AAureBaseCharacter()
 {
@@ -28,17 +30,25 @@ void AAureBaseCharacter::BeginPlay()
 	
 }
 
-// Called every frame
-//void AAureBaseCharacter::Tick(float DeltaTime)
-//{
-//	Super::Tick(DeltaTime);
+void AAureBaseCharacter::InitAbilityActorInfo()
+{
+}
 
-//}
+void AAureBaseCharacter::ApplyEffectToSelf(const TSubclassOf<UGameplayEffect>& GameplayEffectClass, float Level) const
+{
+	check(AbilitySystemComponent);
+	check(GameplayEffectClass);
+	FGameplayEffectContextHandle EffectContextHandle =  GetAbilitySystemComponent()->MakeEffectContext();
+	EffectContextHandle.AddSourceObject(this);
+	const FGameplayEffectSpecHandle EffectSpecHandle = GetAbilitySystemComponent()->MakeOutgoingSpec(GameplayEffectClass, Level,EffectContextHandle);
+	GetAbilitySystemComponent()->ApplyGameplayEffectSpecToSelf(*EffectSpecHandle.Data.Get());
+	
+}
 
-// Called to bind functionality to input
-//void AAureBaseCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
-//{
-//	Super::SetupPlayerInputComponent(PlayerInputComponent);
+void AAureBaseCharacter::InitializeDefaultAttributes() const
+{
+	ApplyEffectToSelf(DefaultPrimaryAttributes,1.0);
+	ApplyEffectToSelf(DefaultSecondaryAttributes,1.0);
+}
 
-//}
 

@@ -8,6 +8,7 @@
 #include "AureHUD.generated.h"
 
 
+class UAttributeMenuWidgetController;
 class UOverlayWidgetController;
 /**
  * 
@@ -22,6 +23,8 @@ public:
 
     UOverlayWidgetController* GetOverlayWidgetController(const FWidgetControllerParams& WCParams);
 
+	UAttributeMenuWidgetController* GetAttributeMenuWidgetController(const FWidgetControllerParams& WCParams);
+
 	void InitOverlayWidget(APlayerController* PlayerController,APlayerState* PlayerState,UAbilitySystemComponent* AbilitySystemComponent,UAttributeSet* AttributeSet);
 	
 protected:
@@ -31,9 +34,18 @@ private:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UAureUserWidget> OverlayWidgetClass;
 
-    UPROPERTY()
+	UPROPERTY()
 	TObjectPtr<UOverlayWidgetController> OverlayWidgetController;
 	
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<UOverlayWidgetController> OverlayWidgetControllerClass;
+
+	
+	UPROPERTY()
+	TObjectPtr<UAttributeMenuWidgetController> AttributeMenuWidgetController;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<UAttributeMenuWidgetController> AttributeMenuWidgetControllerClass;
+
+
 };

@@ -15,14 +15,12 @@
 	GAMEPLAYATTRIBUTE_VALUE_GETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_SETTER(PropertyName) \
 	GAMEPLAYATTRIBUTE_VALUE_INITTER(PropertyName)
-
+//DECLARE_DELEGATE_RetVal(FGameplayAttribute,FAttributeSiginature);
 USTRUCT()
 struct FEffectProperties
 {
 	GENERATED_BODY()
 	FEffectProperties(){}
-
-
 
 	FGameplayEffectContextHandle EffectContextHandle;
     UPROPERTY()
@@ -46,7 +44,8 @@ struct FEffectProperties
 	ACharacter* TargetCharacter = nullptr;
 	
 };
-
+//或者在Tmap处直接使用函数指针
+typedef TBaseStaticDelegateInstance<FGameplayAttribute(),FDefaultDelegateUserPolicy>::FFuncPtr FAttributeFuncPtr;
 
 UCLASS()
 class GAS_RPG_API UAureAttributeSet : public UAttributeSet
@@ -58,9 +57,14 @@ public:
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
+	
+	void ShowFloatText(FEffectProperties Properties, float LocalIncomingDamage) const;
 
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
+	//也可以换成函数指针  TMap<FGameplayTag,  FGameplayAttribute(*)()>TagsToAttributes;
+	TMap<FGameplayTag, FAttributeFuncPtr>TagsToAttributes;
+	
 	//生命值
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ShengMingZhi,Category="Attribute")
 	FGameplayAttributeData ShengMingZhi;
@@ -87,9 +91,9 @@ public:
 	ATTRIBUTE_ACCESSORS(UAureAttributeSet,LiLiang);
 
     //主属性智力
-	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ZhiHui,Category="Primary Attribute")
-	FGameplayAttributeData ZhiHui;
-	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ZhiHui);
+	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ZhiLi,Category="Primary Attribute")
+	FGameplayAttributeData ZhiLi;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ZhiLi);
 
 	//主属性敏捷
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_MinJie,Category="Primary Attribute")
@@ -109,31 +113,51 @@ public:
 	//次要属性 穿甲，依附于主属性
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ChuanJia,Category="Secondary Attribute")
 	FGameplayAttributeData ChuanJia;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ChuanJia);
 
 	//次要属性 格挡
 
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_GeDang,Category="Secondary Attribute")
 	FGameplayAttributeData GeDang;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,GeDang);
 
 	//次要属性 暴击
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_BaoJi,Category="Secondary Attribute")
 	FGameplayAttributeData BaoJi;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,BaoJi);
 
 	//次要属性 暴击伤害
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_BaoJiDamage,Category="Secondary Attribute")
 	FGameplayAttributeData BaoJiDamage;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,BaoJiDamage);
 	
 	//次要属性 暴击抵抗
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_BaoJiResist,Category="Secondary Attribute")
 	FGameplayAttributeData BaoJiResist;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,BaoJiResist);
 
 	//次要属性 生命恢复
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ShengMingRegener,Category="Secondary Attribute")
 	FGameplayAttributeData ShengMingRegener;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ShengMingRegener);
 
 	//次要属性 魔法恢复
 	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_MonaRegener,Category="Secondary Attribute")
 	FGameplayAttributeData MonaRegener;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,MonaRegener);
+
+
+
+	/*
+	 *Meta Attributes 元属性
+	 * 
+	 */
+    UPROPERTY(BlueprintReadOnly,Category="Meta Attributes")
+	FGameplayAttributeData MetaIncomingDamage;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,MetaIncomingDamage);
+     
+
+	
     
     UFUNCTION()
 	void OnRep_ShengMingZhi(const FGameplayAttributeData& OldShengMingZhi) const;
@@ -150,7 +174,7 @@ public:
 	UFUNCTION()
 	void OnRep_LiLiang(const FGameplayAttributeData& OldLiLiang) const;
 	UFUNCTION()
-	void OnRep_ZhiHui(const FGameplayAttributeData& OldZhiHui) const;
+	void OnRep_ZhiLi(const FGameplayAttributeData& OldZhiLi) const;
 	UFUNCTION()
 	void OnRep_MinJie(const FGameplayAttributeData& OldMinJie )const;
 	UFUNCTION()
@@ -176,8 +200,7 @@ public:
 	void OnRep_ShengMingRegener(const FGameplayAttributeData& OldShengMingRegener) const;
 	UFUNCTION()
 	void OnRep_MonaRegener(const FGameplayAttributeData& OldMonaRegener) const;
-    
 	
 private:
-	void SetEffectProperties( const FGameplayEffectModCallbackData& Data , FEffectProperties& EffectProperties ) const;
+	static void SetEffectProperties( const FGameplayEffectModCallbackData& Data , FEffectProperties& EffectProperties );
 };

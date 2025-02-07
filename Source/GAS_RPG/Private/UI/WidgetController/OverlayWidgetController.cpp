@@ -69,11 +69,9 @@ void UOverlayWidgetController::BindCallbacksToDependencies()
 					}
                     //OnMessageWidgetRowDelegate.Broadcast(*Row);
 				}
-				
 				// const FString Msg = FString::Printf(TEXT("Overlay Widget Controller: %s"), *Tag.ToString());
 				// GEngine->AddOnScreenDebugMessage(-1, 15.f, FColor::Blue, Msg);
-
-
+				
 			}
 		}
 		);

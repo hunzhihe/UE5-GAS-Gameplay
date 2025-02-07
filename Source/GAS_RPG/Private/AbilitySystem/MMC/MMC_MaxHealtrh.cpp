@@ -13,7 +13,6 @@ UMMC_MaxHealtrh::UMMC_MaxHealtrh()
 	NaiLiDef.bSnapshot = false;
 
 	RelevantAttributesToCapture.Add(NaiLiDef);
-	
 }
 
 float UMMC_MaxHealtrh::CalculateBaseMagnitude_Implementation(const FGameplayEffectSpec& Spec) const

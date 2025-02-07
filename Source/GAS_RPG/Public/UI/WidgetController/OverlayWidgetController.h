@@ -78,7 +78,6 @@ protected:
 	T* GetDataTableRowByTag(UDataTable* DataTable,const FGameplayTag& Tag) const
 	{
 	 T* Row= DataTable->FindRow<T>(Tag.GetTagName(),TEXT(""));
-
 		 return Row;
 	}
 };

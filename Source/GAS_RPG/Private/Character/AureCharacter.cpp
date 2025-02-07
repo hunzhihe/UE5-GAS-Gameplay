@@ -42,6 +42,8 @@ void AAureCharacter::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
     //服务器端
 	InitAbilityActorInfo();
+	//AddCharacterAbilities()
+	InitializeAbilities();
 }
 
 void AAureCharacter::OnRep_PlayerState()

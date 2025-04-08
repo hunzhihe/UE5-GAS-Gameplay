@@ -3,6 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "AbilitySystem/AureAbilitySystemComponentBase.h"
+#include "AbilitySystem/Date/AbilityInfo.h"
 #include "UI/WidgetController/AureWidgetController.h"
 #include "UI/Widgets/AureUserWidget.h"
 #include "OverlayWidgetController.generated.h"
@@ -14,6 +16,8 @@
 // DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnMaxManaChangedSignature,float,newMaxMana);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnAttributeChangedSignature,float,newValue);
+
+
 
 USTRUCT(BlueprintType)
 
@@ -63,17 +67,25 @@ public:
 	UPROPERTY(BlueprintAssignable,Category="GAS|Messages")
 	FMessageWidgetRowSignature OnMessageWidgetRowDelegate;
 
+	
+
+	//经验条百分比变动回调
+	UPROPERTY(BlueprintAssignable,Category="GAS|XP")
+	FOnAttributeChangedSignature OnXPPercentChangeDelegate;
+    //等级变动回调
+    UPROPERTY(BlueprintAssignable,Category="GAS|Level")
+	FOnPlayStateChangedSignature OnPlayerLevelChangedDelegate;
+	
 protected:
     UPROPERTY(EditDefaultsOnly,BlueprintReadOnly)
 	TObjectPtr<UDataTable> MessageWidgetDataTable;
+
+
+
+	//经验变动后的回调
+	void OnXPChanged(int32 NewXP);
+
 	
-	// void HealthChanged(const FOnAttributeChangeData& Data) const;
-	//void MaxHealthChanged(const FOnAttributeChangeData& Data) const;
-
-	//void ManaChanged(const FOnAttributeChangeData& Data) const;
-	//void MaxManaChanged(const FOnAttributeChangeData& Data) const;
-
-
 	template<typename T>
 	T* GetDataTableRowByTag(UDataTable* DataTable,const FGameplayTag& Tag) const
 	{

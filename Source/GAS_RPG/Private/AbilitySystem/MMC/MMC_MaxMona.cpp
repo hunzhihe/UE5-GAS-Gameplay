@@ -27,8 +27,11 @@ float UMMC_MaxMona::CalculateBaseMagnitude_Implementation(const FGameplayEffectS
 	float ZhiLi = 0.f;
 	GetCapturedAttributeMagnitude(ZhiLiDef, Spec, EvaluationParameters, ZhiLi);
 	ZhiLi = FMath::Max<float>(ZhiLi, 0.f);
-	ICombatInterface* Interface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
-	const int32 Level = Interface->GetLevel();
 
-	return 50.f + 2.5 * Level + 5.0f * ZhiLi;
+	int32 PlayerLevel = 1;
+	if (Spec.GetContext().GetSourceObject()->Implements<UCombatInterface>())
+	{
+		PlayerLevel = ICombatInterface::Execute_GetLevel(Spec.GetContext().GetSourceObject());
+	}
+	return 50.f + 2.5 * PlayerLevel + 5.0f * ZhiLi;
 }

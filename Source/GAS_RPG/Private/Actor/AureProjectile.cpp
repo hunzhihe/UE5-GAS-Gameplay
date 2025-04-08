@@ -6,6 +6,7 @@
 #include "AbilitySystemBlueprintLibrary.h"
 #include "AbilitySystemComponent.h"
 #include "NiagaraFunctionLibrary.h"
+#include "AbilitySystem/AureAbilitySysTEM_BFL.h"
 #include "Components/AudioComponent.h"
 #include "Components/SphereComponent.h"
 #include "GAS_RPG/GAS_RPG.h"
@@ -42,6 +43,7 @@ void AAureProjectile::BeginPlay()
 {
 	Super::BeginPlay();
 	SetLifeSpan(LifeSpan);
+	SetReplicateMovement(true);
 	//绑定碰撞检测回调
 	Sphere->OnComponentBeginOverlap.AddDynamic(this, &AAureProjectile::OnSphereOverlap);
 
@@ -51,42 +53,73 @@ void AAureProjectile::BeginPlay()
 
 void AAureProjectile::Destroyed()
 {
-	//如果对火球没有权威性控制权，并且现在还没有触发碰撞体的重叠事件，那就在销毁时播放击中特效
-	if (!bHasHit && !HasAuthority())
+	if (LoopSoundComponent)
 	{
-		PlayEffects();
+		LoopSoundComponent->Stop();
+		LoopSoundComponent->DestroyComponent();
 	}
+	//如果对火球没有权威性控制权，并且现在还没有触发碰撞体的重叠事件，那就在销毁时播放击中特效
+	if (!bHasHit && !HasAuthority())OnHit();
 	Super::Destroyed();
 }
 
 void AAureProjectile::OnSphereOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                                       UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	PlayEffects();
+
+	//技能释放者和另一个碰撞者Actor不同时才能运行后面的代码
+	//如果不是敌对势力，不执行后面的代码
+	if (!IsValidOverlap(OtherActor)) return;
 	
+	if (!bHasHit) OnHit();
 	if (HasAuthority())
 	{
 		if (UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor))
 		{
-			TargetASC->ApplyGameplayEffectSpecToSelf(*DamageEffectSpecHandle.Data.Get());
+            //获取碰撞时，技能的朝向,死亡冲击的力度和方向
+			const FVector DeathImpulse =GetActorForwardVector() * DamageEffectParams.DeathImpulseMagnitude;
+			DamageEffectParams.DeathImpulse = DeathImpulse;
+            //判断攻击是否触发击退
+            if (const bool bKnockback = FMath::RandRange(1,100)<DamageEffectParams.KnockbackChance)
+            {
+	         //将技能攻击的朝向向上偏转，
+            	const FVector KnockbackForceDirection =
+            		GetActorForwardVector().RotateAngleAxis(-45, GetActorRightVector());
+            	DamageEffectParams.KnockbackForceDirection =
+            		KnockbackForceDirection * DamageEffectParams.KnockbackForceMagnitude;
+            }
+			//通过配置项应用给目标ASC
+			DamageEffectParams.TargetASC = TargetASC;
+			 UAureAbilitySysTEM_BFL::ApplyDamageEffect(DamageEffectParams);
 		}
 		Destroy();
 	}
-	else
-	{
-		bHasHit= true;
-	}
-	
+	else bHasHit= true;
+
 }
 
-void AAureProjectile::PlayEffects() const
+void AAureProjectile::OnHit()
 {
 	UGameplayStatics::PlaySoundAtLocation(this, ImpactSound, GetActorLocation(), FRotator::ZeroRotator);
 
 	UNiagaraFunctionLibrary::SpawnSystemAtLocation(this, ImpactEffect, GetActorLocation());
 
-	LoopSoundComponent->Stop();
+	if (LoopSoundComponent)
+	{
+		LoopSoundComponent->Stop();
+		LoopSoundComponent->DestroyComponent();
+	}
+	bHasHit = true;
+	
 }
+ bool AAureProjectile::IsValidOverlap(const AActor* OtherActor) const
+ {
+ 	if (DamageEffectParams.SourceASC == nullptr) return false;
+    const AActor* SourceAvatarActor = DamageEffectParams.SourceASC->GetAvatarActor();
+ 	if (SourceAvatarActor == OtherActor) return false;
+ 	if (!UAureAbilitySysTEM_BFL::IsEnemy(SourceAvatarActor, OtherActor)) return false;
 
+	return true;
+ }
 
 

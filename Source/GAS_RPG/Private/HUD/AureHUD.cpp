@@ -6,6 +6,7 @@
 #include "Blueprint/UserWidget.h"
 #include "UI/WidgetController/AttributeMenuWidgetController.h"
 #include "UI/WidgetController/OverlayWidgetController.h"
+#include "UI/WidgetController/SpellMenuWidgetController.h"
 
 UOverlayWidgetController* AAureHUD::GetOverlayWidgetController(const FWidgetControllerParams& WCParams)
 {
@@ -53,6 +54,18 @@ UAttributeMenuWidgetController* AAureHUD::GetAttributeMenuWidgetController(const
 		return  AttributeMenuWidgetController;
 	}
 	return AttributeMenuWidgetController;
+}
+
+USpellMenuWidgetController* AAureHUD::GetSpellMenuWidgetController(const FWidgetControllerParams& WCParams)
+{
+	if (SpellMenuWidgetController == nullptr)
+	{
+		SpellMenuWidgetController = NewObject<USpellMenuWidgetController>( this,SpellMenuWidgetControllerClass);
+		SpellMenuWidgetController->SetWidgetControllerParams(WCParams);
+		SpellMenuWidgetController->BindCallbacksToDependencies();
+	}
+
+	return SpellMenuWidgetController;
 }
 
 

@@ -7,11 +7,14 @@
 #include "AbilitySystemInterface.h"
 #include "AttributeSet.h"
 #include "GameplayEffect.h"
+#include "NiagaraSystem.h"
 #include "AbilitySystem/Abilitis/AureGameplayAbility.h"
 #include "GameFramework/Character.h"
 #include "Interaction/CombatInterface.h"
+//#include "Interaction/EnemyInterface.h"
 #include "AureBaseCharacter.generated.h"
 
+class UDeBuffNiagaraComponent;
 class UAbilitySystemComponent;
 class UAttributeSet;
 UCLASS()
@@ -22,19 +25,45 @@ public:
 	
 	
 	AAureBaseCharacter();
+
+	FOnASCRegistered OnAscRegistered;//ASC注册成功委托
+	FOnDeath OnDeath;//角色死亡委托
+	
 	virtual UAbilitySystemComponent* GetAbilitySystemComponent() const override;
     UAttributeSet* GetAttributeSet()const {return AttributeSet;}
 
-	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
 	
 	virtual void BeginPlay() override;
-
 	
+    bool bDead = false;
+	
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Character Class Defaults")
+	ECharacterClass CharacterClass = ECharacterClass::Warrior;
+	//-----ICombatInterface-----
 	//角色死亡函数覆写
-	virtual void Die() override;
+	virtual void Die(const FVector& DeathImpulse) override;
+	virtual UAnimMontage* GetHitReactMontage_Implementation() override;
+	virtual FVector GetCombatSocketLocation_Implementation(const FGameplayTag& MontageTag) const override;
+	virtual bool IsDead_Implementation() const override;
+	virtual  AAureBaseCharacter* GetAvatar_Implementation()  override;
+	virtual TArray<FTaggedMontage> GetAttackMontages_Implementation() override;
+	virtual UNiagaraSystem* GetBloodEffect_Implementation() override;
+	virtual FTaggedMontage GetTaggedMontageByTag_Implementation(const FGameplayTag& TagMontages)override;
+	virtual int32 GetMinionsCount_Implementation() override;
+	virtual void IncrementMinionsCount_Implementation(const int32 Amount) override;
+	virtual ECharacterClass GetCharacterClass_Implementation() override;
+	virtual FOnASCRegistered& GetOnASCRegisteredDelegate() override;//获取到ASC注册成功委托
+	virtual FOnDeath& GetOnDeathDelegate() override;
+	
+	//--------ICombatInterface结束-----
 
 	UFUNCTION(NetMulticast, Reliable)
-	virtual void MulticastHandleDeath(); 
+	virtual void MulticastHandleDeath(const FVector& DeathImpulse);
+
+	
+	//可用于设置多个基础攻击动画
+	UPROPERTY(EditAnywhere,Category="Combat")
+	TArray<FTaggedMontage> AttackMontages;
 	
 	//指针变量：武器组件
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
@@ -42,8 +71,22 @@ public:
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
 	FName WeaponTipSocketName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	FName LeftHandSocketName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	FName RightHandSocketName;
 
-	virtual FVector GetCombatSocketLocation() override;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	FName TailSocketName;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Combat")
+	USoundBase* DeathSound;
+	//受伤特效
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "NiagaraSystem")
+	UNiagaraSystem* BloodEffect;
+
+	//火焰负面效果表现组件
+	UPROPERTY(VisibleAnywhere)
+	TObjectPtr<UDeBuffNiagaraComponent> BurnDeBuffNiagaraComponent;
 
 	UPROPERTY()
 	TObjectPtr<UAbilitySystemComponent> AbilitySystemComponent;
@@ -67,7 +110,7 @@ public:
 	
 	virtual  void InitializeDefaultAttributes() const;
 
-	void InitializeAbilities();
+	void InitializeAbilities() const;
 
 
 	//溶解函数
@@ -86,13 +129,25 @@ public:
 
 	UPROPERTY(EditAnywhere,BlueprintReadOnly)
 	TObjectPtr<UMaterialInstance> WeaponDissolveMaterialInstance;
+
+	//召唤物数量
+	UPROPERTY(BlueprintReadOnly,Category="Combat")
+	int32 MinionsCount=0;
 private:
 	UPROPERTY(EditAnywhere,Category="Abilities")
 	TArray<TSubclassOf<UGameplayAbility> > Abilities;
 
+	//被动技能设置
+	UPROPERTY(EditAnywhere,Category="Abilities")
+	TArray<TSubclassOf<UGameplayAbility> > StartupPassiveAbilities;
+
 	UPROPERTY(EditAnywhere,Category="Combat")
 	TObjectPtr<UAnimMontage> HitReactMontage;
 
+
+
+
+	
 
 
 

@@ -26,6 +26,14 @@ public:
 	UPROPERTY(BlueprintAssignable,Category="GAS|Attributes")
 	FAttibuteInfoSignature AttributeInfoDelegate;
 
+	//属性点变化的监听委托
+	UPROPERTY(BlueprintAssignable,Category="Widget Controller")
+	FOnPlayStateChangedSignature AttributePointsChangedDelegate;
+
+	//升级属性
+	UFUNCTION(BlueprintCallable,Category="GAS|Attributes")
+	void UpgradeAttribute(const FGameplayTag& AttributeTag);
+	
 private:
 	UPROPERTY(EditDefaultsOnly,Category="Widget Controller")
 	TObjectPtr<UAttributeInfo_DataAsset> AttributeInfo;

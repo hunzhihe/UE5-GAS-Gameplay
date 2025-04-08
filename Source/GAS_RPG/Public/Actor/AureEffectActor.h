@@ -8,14 +8,15 @@
 #include "AureEffectActor.generated.h"
 
 
-
+//游戏效果移除状态
 UENUM(BlueprintType)
 enum class EEffectRemovedPolicy :uint8
 {
+	
 	RemoveOnOverlay,
 	DoNotRemoved
 };
-
+//游戏效果应用状态
 UENUM(BlueprintType)
 enum class EEffectApplicationPolicy:uint8
 {
@@ -25,7 +26,7 @@ enum class EEffectApplicationPolicy:uint8
 	
 };
 
-
+//影响游戏角色属性的物件基类
 UCLASS()
 class GAS_RPG_API AAureEffectActor : public AActor
 {
@@ -55,6 +56,14 @@ protected:
 	void OnOverlay(AActor* TargetActor);
 	UFUNCTION(BlueprintCallable,Category = "Applied  Effects")
 	void OnEndOverlay(AActor* TargetActor);
+
+	// 是否销毁游戏效果(Instant和Duration的GE)
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Applied  Effects")
+	bool bDestroyOnEffectApplication = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Applied  Effects")
+	bool bApplyEffectsToEnemies = false;
+	
 	//即时游戏效果类，如药水
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Applied  Effects")
 	TSubclassOf<UGameplayEffect> InstantGameplayEffectClass;

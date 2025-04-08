@@ -25,4 +25,11 @@ public:
 	//两个纯虚函数，在子类中定义，用来高亮显示敌人
 	virtual  void  HighlightActor() = 0;
 	virtual  void  UnHighlightActor() = 0;
+   //  设置和获取战斗目标
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "EnemyInterface")
+	void SetCombatTarget(AActor* CombatTarget);
+	UFUNCTION(BlueprintCallable, BlueprintNativeEvent, Category = "EnemyInterface")
+	AActor* GetCombatTarget() const;
+
+	
 };

@@ -7,6 +7,7 @@
 #include "AbilitySystem/AureAbilitySystemComponentBase.h"
 #include "AbilitySystem/AureAbilitySysTEM_BFL.h"
 #include "AbilitySystem/AureAttributeSet.h"
+#include "BehaviorTree/BlackboardComponent.h"
 #include "Components/WidgetComponent.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GAS_RPG/GAS_RPG.h"
@@ -21,9 +22,15 @@ AAureEnemy::AAureEnemy()
 
 	
 	AttributeSet = CreateDefaultSubobject<UAureAttributeSet>("AttributeSet");
-	
+	//血条组件
 	HealthBar = CreateDefaultSubobject<UWidgetComponent>("HealthBar");
 	HealthBar->SetupAttachment(GetRootComponent());
+
+    bUseControllerRotationPitch = false;
+	bUseControllerRotationYaw = false;
+    bUseControllerRotationRoll = false;
+    GetCharacterMovement()->bOrientRotationToMovement = true;
+	
 }
 
 void AAureEnemy::HighlightActor()
@@ -42,23 +49,72 @@ void AAureEnemy::UnHighlightActor()
 	Weapon->SetRenderCustomDepth(false);
 }
 
-int32 AAureEnemy::GetLevel()
+AActor* AAureEnemy::GetCombatTarget_Implementation() const
+{
+	return CombatTarget;
+}
+
+
+
+void AAureEnemy::SetCombatTarget_Implementation(AActor* InCombatTarget)
+{
+	CombatTarget = InCombatTarget;
+}
+
+
+int32 AAureEnemy::GetLevel_Implementation()
 {
 	return Level;
+}
+
+void AAureEnemy::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+	//该设置只在服务器端生效
+	if (!HasAuthority())return;
+    //AI控制器在服务器运行，因此要在possessedby中获取服务器返回
+	AureAIController = Cast<AAureAIController>(NewController);
+    //初始化行为树上的黑板
+	AureAIController->GetBlackboardComponent()->InitializeBlackboard(*BehaviorTree->BlackboardAsset);
+
+	AureAIController->RunBehaviorTree(BehaviorTree);
+
+
+	AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("HitReacting"), false);
+	// if (CharacterClass == ECharacterClass::Warrior)
+	// {
+	// 	AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("RangedAttacker"),false);
+	// }
+	// else 
+	// {
+	// 	AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("RangedAttacker"),true);
+	// }
+	AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("RangedAttacker"),CharacterClass != ECharacterClass::Warrior);
+	
 }
 
 void AAureEnemy::HitReactTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
 	bHitReacting = NewCount > 0;
 	GetCharacterMovement()->MaxWalkSpeed = bHitReacting ? 0.f : BaseWalkSpeed;
+
+	//设置黑板键的值
+	if (AureAIController && AureAIController->GetBlackboardComponent())
+	{
+		AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("HitReacting"), bHitReacting);
+	}
 }
 
 //死亡函数
-void AAureEnemy::Die()
+void AAureEnemy::Die(const FVector& DeathImpulse)
 {
 	//死亡设置清除时间
 	SetLifeSpan(lifeSpan);
-	Super::Die();
+	if (AureAIController && AureAIController->GetBlackboardComponent())
+	{
+		AureAIController->GetBlackboardComponent()->SetValueAsBool(FName("IsDead"), false);
+	}
+	Super::Die(DeathImpulse);
 }
 
 void AAureEnemy::BeginPlay()
@@ -69,7 +125,11 @@ void AAureEnemy::BeginPlay()
 	//初始化ASC
     InitAbilityActorInfo();
 
-	UAureAbilitySysTEM_BFL::GiveStartupAbilities(this,AbilitySystemComponent);
+	if (HasAuthority())
+	{
+		UAureAbilitySysTEM_BFL::GiveStartupAbilities(this,AbilitySystemComponent,CharacterClass);
+	}
+	//UAureAbilitySysTEM_BFL::GiveStartupAbilities(this,AbilitySystemComponent);
 
 	
 	//将敌人基类作为控制器绑定给用户控件
@@ -80,12 +140,14 @@ void AAureEnemy::BeginPlay()
 
 	if (const UAureAttributeSet* AureAS = Cast<UAureAttributeSet>(AttributeSet))
 	{
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AureAS->GetShengMingZhiAttribute()).AddLambda([this](const FOnAttributeChangeData& Data)
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			AureAS->GetShengMingZhiAttribute()).AddLambda([this](const FOnAttributeChangeData& Data)
 		{
 			OnShengMingzhiChanged.Broadcast(Data.NewValue);
 		}
 		);
-		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AureAS->GetMaxShengMingZhiAttribute()).AddLambda([this](const FOnAttributeChangeData& Data)
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(
+			AureAS->GetMaxShengMingZhiAttribute()).AddLambda([this](const FOnAttributeChangeData& Data)
 		{
 			OnMaxHpChanged.Broadcast(Data.NewValue);
 		}
@@ -102,7 +164,12 @@ void AAureEnemy::InitAbilityActorInfo()
 	AbilitySystemComponent->InitAbilityActorInfo(this, this);
 	Cast<UAureAbilitySystemComponentBase>(AbilitySystemComponent)->AbilityActorInfoSet();
 
-	InitializeDefaultAttributes();
+	if (HasAuthority())
+	{
+		InitializeDefaultAttributes();
+	}
+
+	OnAscRegistered.Broadcast(AbilitySystemComponent);
 	
 }
 
@@ -111,3 +178,5 @@ void AAureEnemy::InitializeDefaultAttributes() const
 	//Super::InitializeDefaultAttributes();
 	UAureAbilitySysTEM_BFL::InitializeDefaultAttributes(this, CharacterClass, Level, AbilitySystemComponent);
 }
+
+

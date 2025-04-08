@@ -26,6 +26,12 @@ struct FCharacterClassDefaultInfo
 	GENERATED_BODY()
 	UPROPERTY(EditDefaultsOnly,Category="Class Defaults")
 	TSubclassOf<UGameplayEffect> PrimaryAttribute;
+
+	UPROPERTY(EditDefaultsOnly,Category="Class Defaults")
+	FScalableFloat XPReward = FScalableFloat();
+	
+	UPROPERTY(EditDefaultsOnly,Category="Class Defaults")
+	TArray<TSubclassOf<UGameplayAbility>> StartupAbilities;
 };
 
 UCLASS()
@@ -45,6 +51,9 @@ public:
 	//用于设置创建敌人所拥有的初始技能
 	UPROPERTY(EditDefaultsOnly,Category="Common Class Defaults")
 	TArray<TSubclassOf<UGameplayAbility>> CommonAbilities;
+
+	UPROPERTY(EditDefaultsOnly,Category="Common Class Defaults|Damage Calculation Coefficent")
+	TObjectPtr<UCurveTable> DamageCalculationCoefficent;
 
 	//通过上面的枚举类获取对应的初始化类
 	FCharacterClassDefaultInfo GetClassDefaultInfo(ECharacterClass Class) const;

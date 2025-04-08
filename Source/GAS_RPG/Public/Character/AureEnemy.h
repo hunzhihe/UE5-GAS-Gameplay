@@ -4,6 +4,8 @@
   
 #include "CoreMinimal.h"
 #include "AbilitySystem/Date/CharacterClassInfo.h"
+#include "AI/AureAIController.h"
+#include "BehaviorTree/BehaviorTree.h"
 #include "Character/AureBaseCharacter.h"
 #include "Interaction/EnemyInterface.h"
 #include "UI/WidgetController/OverlayWidgetController.h"
@@ -23,11 +25,20 @@ public:
 	//Enemy 接口
 	virtual  void  HighlightActor() override;
 	virtual  void  UnHighlightActor() override;
-   
+
+	
+	virtual AActor* GetCombatTarget_Implementation() const override;
+	virtual  void SetCombatTarget_Implementation(AActor* InCombatTarget)  override;
 	//Enemy 接口结束
 
-	virtual int32 GetLevel() override;
-
+	/*--------- ICombatInterface战斗接口---------------*/
+	virtual int32 GetLevel_Implementation() override;
+	    //敌人角色死亡函数覆写
+	virtual void Die(const FVector& DeathImpulse) override;
+	/*---------- ICombatInterface战斗接口--------------*/
+	//将在Pawn被控制器（PlayerController和AIController都行）控制时触发回调
+	virtual void PossessedBy(AController* NewController) override;
+	
 	UPROPERTY(BlueprintAssignable)
 	FOnAttributeChangedSignature OnShengMingzhiChanged;
 
@@ -39,7 +50,7 @@ public:
 	UPROPERTY(BlueprintReadOnly,Category = "Combat" )
 	bool bHitReacting = false;
 	//角色最大移动速度
-	UPROPERTY(BlueprintReadOnly,Category = "Combat" )
+	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category = "Combat" )
 	float BaseWalkSpeed = 250.0f;
 
 	void HitReactTagChanged(const FGameplayTag Tag, int32 NewCount);
@@ -48,8 +59,9 @@ public:
     UPROPERTY(EditAnywhere,BlueprintReadOnly,Category = "Combat")
 	float lifeSpan = 5.0f;
 
-    //敌人角色死亡函数覆写
-	virtual void Die() override;
+
+
+	
 protected:
 	virtual void BeginPlay() override;
 
@@ -58,14 +70,22 @@ protected:
 	virtual  void InitAbilityActorInfo() override;
 	virtual void InitializeDefaultAttributes() const override;
 
+	
+
 
     UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Enemy")
 	int32 Level = 1;
 
-	UPROPERTY(EditAnywhere,BlueprintReadOnly,Category="Enemy")
-	ECharacterClass CharacterClass = ECharacterClass::Warrior;
+
 
 	//敌人生命条
 	UPROPERTY(VisibleAnywhere,BlueprintReadOnly,Category="Enemy")
 	TObjectPtr<UWidgetComponent> HealthBar;
+
+	UPROPERTY(EditAnywhere,Category="AI")
+	TObjectPtr<UBehaviorTree> BehaviorTree;
+	UPROPERTY()
+	TObjectPtr<AAureAIController> AureAIController;
+	UPROPERTY()
+	TObjectPtr<AActor> CombatTarget;;
 };

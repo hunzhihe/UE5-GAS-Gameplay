@@ -76,11 +76,18 @@ void AAureEffectActor::ApplyEffectToTarget(AActor* TargetActor, TSubclassOf<UGam
 	if (bIsInfinite && InfiniteEffectRemovedPolicy == EEffectRemovedPolicy::RemoveOnOverlay )
 	{
 		ActiveGameplayEffectsHandle.Add(ActiveEffectHandle,TargetASC);
-	};
+	}
+	else if (bDestroyOnEffectApplication)//如果设置了应用时删除，除了永久的游戏效果，其他游戏效果都会被删除
+	{
+		Destroy();
+	}
 }
 
 void AAureEffectActor::OnOverlay(AActor* TargetActor)
 {
+    //如果出发角色类型为敌人，则不应用游戏效果
+	if (TargetActor->ActorHasTag("Enemy") && !bApplyEffectsToEnemies)return;
+	
 	if (InstantEffectApplicationPolicy==EEffectApplicationPolicy::ApplyOnOverlay)
 	{
 		ApplyEffectToTarget(TargetActor,InstantGameplayEffectClass);
@@ -97,6 +104,9 @@ void AAureEffectActor::OnOverlay(AActor* TargetActor)
 
 void AAureEffectActor::OnEndOverlay(AActor* TargetActor)
 {
+
+	if (TargetActor->ActorHasTag("Enemy") && !bApplyEffectsToEnemies)return;
+	
 	if (InstantEffectApplicationPolicy==EEffectApplicationPolicy::ApplyOnEndOverlay)
 	{
 		ApplyEffectToTarget(TargetActor,InstantGameplayEffectClass);
@@ -110,19 +120,26 @@ void AAureEffectActor::OnEndOverlay(AActor* TargetActor)
 	{
 		ApplyEffectToTarget(TargetActor,InfiniteGameplayEffectClass);
 	}
+
+	//移除游戏效果
 	if(InfiniteEffectRemovedPolicy == EEffectRemovedPolicy::RemoveOnOverlay)
 	{
 		UAbilitySystemComponent* TargetASC=UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(TargetActor);
 		if (!IsValid(TargetASC)) return;
+
+		//创建存储需要移除的效果句柄存储Key,用于遍历完成后移除
         TArray<FActiveGameplayEffectHandle> HandlesToRemove;
+		
 		for (TTuple<FActiveGameplayEffectHandle,UAbilitySystemComponent*> HandlePair : ActiveGameplayEffectsHandle)
 		{
+			//如果目标ASC与存储的ASC一致，则移除效果
 			if (TargetASC == HandlePair.Value)
 			{
-				TargetASC->RemoveActiveGameplayEffect(HandlePair.Key);
+				TargetASC->RemoveActiveGameplayEffect(HandlePair.Key,1);
 				HandlesToRemove.Add(HandlePair.Key);
 			}
 		}
+		//遍历完成后移除
 		for (auto& Handle : HandlesToRemove)
 		{
 			ActiveGameplayEffectsHandle.FindAndRemoveChecked(Handle);

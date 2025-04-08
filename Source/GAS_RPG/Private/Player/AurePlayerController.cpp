@@ -35,7 +35,7 @@ void AAurePlayerController::PlayerTick(float DeltaTime)
 	
 }
 
-void AAurePlayerController::ShowDamagedNumber_Implementation(float Damage,ACharacter*TargetCharacter)
+void AAurePlayerController::ShowDamagedNumber_Implementation(float Damage,ACharacter*TargetCharacter,bool bIsCritical,bool bIsGeDang)
 {
 	if (IsValid(TargetCharacter) && DamageTextComponentClass)
 	{
@@ -43,7 +43,7 @@ void AAurePlayerController::ShowDamagedNumber_Implementation(float Damage,AChara
 		DamageText->RegisterComponent();
 		DamageText->AttachToComponent(TargetCharacter->GetRootComponent(),FAttachmentTransformRules::KeepRelativeTransform);
 		DamageText->DetachFromComponent(FDetachmentTransformRules::KeepWorldTransform);
-		DamageText->SetDamageText(Damage,false,false);
+		DamageText->SetDamageText(Damage,bIsGeDang,bIsCritical);
 	}
 
 
@@ -132,8 +132,12 @@ void AAurePlayerController::AbilityInputTagReleased(FGameplayTag InputTag)
 					Spline->AddSplinePoint(PointLoc,ESplineCoordinateSpace::World);//为样条曲线添加新点
 	 				//DrawDebugSphere(GetWorld(),PointLoc,8.f,8,FColor::Green,false,5.f);
 				}
-	 			CachedDestination = Navpath->PathPoints[Navpath->PathPoints.Num() - 1];
-	 			bHasAutoRuning = true;
+			    if (Navpath->PathPoints.Num() > 0)
+			    {
+			    	CachedDestination = Navpath->PathPoints[Navpath->PathPoints.Num() - 1];
+			    	bHasAutoRuning = true;
+			    }
+
 			}
 		}
 	 	holdTime = 0.f;

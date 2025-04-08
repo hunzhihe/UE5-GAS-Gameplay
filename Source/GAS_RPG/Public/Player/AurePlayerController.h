@@ -29,7 +29,7 @@ public:
 	AAurePlayerController();
 	virtual  void PlayerTick(float DeltaTime) override;
     UFUNCTION(Client,Reliable)
-	void ShowDamagedNumber(float Damage,ACharacter*TargetCharacter);
+	void ShowDamagedNumber(float Damage,ACharacter*TargetCharacter,bool bIsCritical,bool bIsGeDang);
 	
 protected:
 	virtual  void BeginPlay() override;
@@ -41,14 +41,11 @@ private:
 	//创建储存输入映射上下文变量
 	UPROPERTY(EditAnywhere,Category="Input")
 	TObjectPtr<UInputMappingContext> AuraContext;
-
 	//创建存储输入动作变量
 	UPROPERTY(EditAnywhere,Category="Input")
 	TObjectPtr<UInputAction> MoveAction;
-
 	UPROPERTY(EditAnywhere,Category="Input")
 	TObjectPtr<UAureDA_Input> InputConfig;
-
 	//攻击动作变量
 	UPROPERTY(EditAnywhere,Category="Input")
 	TObjectPtr<UInputAction> ShiftAttackAction;

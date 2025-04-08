@@ -28,8 +28,12 @@ float UMMC_MaxHealtrh::CalculateBaseMagnitude_Implementation(const FGameplayEffe
 	float NaiLi = 0.f;
     GetCapturedAttributeMagnitude(NaiLiDef, Spec, EvaluationParameters,NaiLi);
     NaiLi = FMath::Max<float>(NaiLi, 0.f);
-	ICombatInterface* Interface = Cast<ICombatInterface>(Spec.GetContext().GetSourceObject());
-    const int32 PlayerLevel = Interface->GetLevel();
+	
+	int32 PlayerLevel = 1;
+	if (Spec.GetContext().GetSourceObject()->Implements<UCombatInterface>())
+	{
+		PlayerLevel = ICombatInterface::Execute_GetLevel(Spec.GetContext().GetSourceObject());
+	}
 
-	return 80.f+ 2.5f *NaiLi + 10.f;
+	return 80.f+ 2.5f *NaiLi + 10.f* PlayerLevel;
 }

@@ -54,14 +54,24 @@ class GAS_RPG_API UAureAttributeSet : public UAttributeSet
 public:
 	UAureAttributeSet();
 
+	//发送经验事件
+	static void SendXPEvent(const FEffectProperties& Properties);
+
 	virtual void GetLifetimeReplicatedProps(TArray<class FLifetimeProperty>& OutLifetimeProps) const override;
 
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;
-	
-	void ShowFloatText(FEffectProperties Properties, float LocalIncomingDamage) const;
 
+	static void ShowFloatText(const FEffectProperties& Properties, float LocalIncomingDamage, bool IsBlockedHit, bool bIsCriticalHit);
+
+	
+	/**
+* 在执行 GameplayEffect 后立即调用，以修改属性的基值。无法再进行更多更改。
+* 请注意，这仅在 'execute' 期间调用。例如，对属性的 'base value' 的修改。在应用 GameplayEffect 期间（例如 5 秒 +10 移动速度增益），不会调用它。
+*/
 	virtual void PostGameplayEffectExecute(const struct FGameplayEffectModCallbackData& Data) override;
 
+	//在属性变更时可触发
+	virtual void PostAttributeChange(const FGameplayAttribute& Attribute, float OldValue, float NewValue) override;
 	//也可以换成函数指针  TMap<FGameplayTag,  FGameplayAttribute(*)()>TagsToAttributes;
 	TMap<FGameplayTag, FAttributeFuncPtr>TagsToAttributes;
 	
@@ -146,16 +156,45 @@ public:
 	FGameplayAttributeData MonaRegener;
 	ATTRIBUTE_ACCESSORS(UAureAttributeSet,MonaRegener);
 
+	//----------抗性----------
+	//次要属性 火焰抗性
+	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ResistanceFire,Category="Secondary Attribute")
+	FGameplayAttributeData ResistanceFire;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ResistanceFire);
+
+	//次要属性 冰冻抗性
+	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ResistanceIce,Category="Secondary Attribute")
+	FGameplayAttributeData ResistanceIce;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ResistanceIce);
+
+	//次要属性 电击抗性
+	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ResistanceLightning,Category="Secondary Attribute")
+	FGameplayAttributeData ResistanceLightning;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ResistanceLightning);
+
+	//次要属性 魔法抗性
+	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ResistanceMagic,Category="Secondary Attribute")
+	FGameplayAttributeData ResistanceMagic;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ResistanceMagic);
+
+	//次要属性 物理抗性
+	UPROPERTY(BlueprintReadOnly,ReplicatedUsing=OnRep_ResistancePhysical,Category="Secondary Attribute")
+	FGameplayAttributeData ResistancePhysical;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,ResistancePhysical);
 
 
 	/*
-	 *Meta Attributes 元属性
-	 * 
+	 *伤害元属性
 	 */
     UPROPERTY(BlueprintReadOnly,Category="Meta Attributes")
 	FGameplayAttributeData MetaIncomingDamage;
 	ATTRIBUTE_ACCESSORS(UAureAttributeSet,MetaIncomingDamage);
-     
+
+	//经验元属性
+	UPROPERTY(BlueprintReadOnly,Category="Meta Attributes")
+	FGameplayAttributeData IncomingXP;
+	ATTRIBUTE_ACCESSORS(UAureAttributeSet,IncomingXP);
+	
 
 	
     
@@ -181,7 +220,6 @@ public:
 	void OnRep_NaiLi(const FGameplayAttributeData& OldNaiLi )const;
     
 /*
- *
  * 次属性回复
  */
 	UFUNCTION()
@@ -200,6 +238,25 @@ public:
 	void OnRep_ShengMingRegener(const FGameplayAttributeData& OldShengMingRegener) const;
 	UFUNCTION()
 	void OnRep_MonaRegener(const FGameplayAttributeData& OldMonaRegener) const;
+	UFUNCTION()
+	void OnRep_ResistanceFire(const FGameplayAttributeData& OldResistanceFire) const;
+	UFUNCTION()
+	void OnRep_ResistanceIce(const FGameplayAttributeData& OldResistanceIce) const;
+	UFUNCTION()
+	void OnRep_ResistanceLightning(const FGameplayAttributeData& OldResistanceLightning) const;
+	UFUNCTION()
+	void OnRep_ResistanceMagic(const FGameplayAttributeData& OldResistanceMagic) const;
+	UFUNCTION()
+	void OnRep_ResistancePhysical(const FGameplayAttributeData& OldResistancePhysical) const;
+
+	//处理传入的参数为伤害属性时，处理的逻辑
+	void HandleIncomeingDamage(const FEffectProperties& Properties);
+
+	//处理传入的参数是经验属性时，处理的逻辑
+	void HandleIncomingXP(const FEffectProperties& Properties);
+
+	//如果当前伤害出发了负面效果，处理逻辑
+	void HandleDeBuff(const FEffectProperties& Properties);
 	
 private:
 	static void SetEffectProperties( const FGameplayEffectModCallbackData& Data , FEffectProperties& EffectProperties );

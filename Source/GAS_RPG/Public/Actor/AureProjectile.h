@@ -3,7 +3,8 @@
 #pragma once
 
 #include "CoreMinimal.h"
-#include "GameplayEffectTypes.h"
+
+#include "AureRPGAbilityTypes.h"
 #include "GameFramework/Actor.h"
 #include "GameFramework/ProjectileMovementComponent.h"
 #include "AureProjectile.generated.h"
@@ -11,6 +12,7 @@
 //struct FGameplayEffectSpecHandle;
 class UNiagaraSystem;
 class USphereComponent;
+
 
 UCLASS()
 class GAS_RPG_API AAureProjectile : public AActor
@@ -36,8 +38,12 @@ public:
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> LoopSoundComponent;
 
-	UPROPERTY(BlueprintReadOnly,meta=(ExposeOnSpawn = true))
-	FGameplayEffectSpecHandle DamageEffectSpecHandle;
+	 UPROPERTY(BlueprintReadOnly,meta=(ExposeOnSpawn = true))
+	 FGameplayEffectSpecHandle DamageEffectSpecHandle;
+
+	UPROPERTY(BlueprintReadWrite, meta = (ExposeOnSpawn = true))
+	FDamageEffectParams DamageEffectParams;
+	
 
 protected:
 	virtual void BeginPlay() override;
@@ -58,6 +64,6 @@ private:
 	bool bHasHit;
 
 	//播放相关特效和声音
-	void PlayEffects() const;
-
+	void OnHit();
+	bool IsValidOverlap(const AActor* OtherActor) const;
 };

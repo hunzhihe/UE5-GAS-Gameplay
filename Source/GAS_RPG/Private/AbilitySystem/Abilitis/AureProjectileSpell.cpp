@@ -7,9 +7,19 @@
 #include "AbilitySystemComponent.h"
 #include "AureGameplayTags.h"
 #include "Actor/AureProjectile.h"
+
 #include "Interaction/CombatInterface.h"
 
 //#include "Kismet/KismetSystemLibrary.h"
+
+FString UAureProjectileSpell::GetDescription(int32 Level)
+{
+	return FString::Printf(TEXT("FireBolt"));
+}
+FString UAureProjectileSpell::GetNextLevelDescription(int32 Level)
+{
+	return FString::Printf(TEXT("FireBolt"));
+}
 
 void UAureProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Handle,
                                            const FGameplayAbilityActorInfo* ActorInfo, const FGameplayAbilityActivationInfo ActivationInfo,
@@ -27,18 +37,21 @@ void UAureProjectileSpell::ActivateAbility(const FGameplayAbilitySpecHandle Hand
 
 
 
-void UAureProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation)
+void UAureProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocation, const FGameplayTag& SocketTag,bool bOverridePitch, float PitchOverride)
 {
 	const bool bIsServer =GetAvatarActorFromActorInfo()->HasAuthority();//函数是否在服务器运行
 	if(!bIsServer)return;
 	
-
-	ICombatInterface* CombatInterface = Cast<ICombatInterface>(GetAvatarActorFromActorInfo());
-	if (CombatInterface)
+	const FVector SocketLocation = ICombatInterface::Execute_GetCombatSocketLocation(
+		GetAvatarActorFromActorInfo(),
+		SocketTag);
+	FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
+	
+	if (bOverridePitch)
 	{
-		const FVector SocketLocation = CombatInterface->GetCombatSocketLocation();
-		FRotator Rotation = (ProjectileTargetLocation - SocketLocation).Rotation();
-		Rotation.Pitch = 0.0f;
+		Rotation.Pitch = PitchOverride;
+	}
+		
 		FTransform SpawnTransfrom;
 		SpawnTransfrom.SetLocation(SocketLocation);
 		//技能角度
@@ -51,19 +64,43 @@ void UAureProjectileSpell::SpawnProjectile(const FVector& ProjectileTargetLocati
 			Cast<APawn>(GetOwningActorFromActorInfo()),
 			ESpawnActorCollisionHandlingMethod::AlwaysSpawn
 			);
-		//创建技能实例后，设置技能数据
-		const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwningActorFromActorInfo());
-		const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), SourceASC->MakeEffectContext());
-
-		//获取标签单例
-        FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
-		//依据等级获取伤害值
-        const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel()) ;
-		GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("火球术伤害: %f"), ScaledDamage));
-		UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, GameplayTags.Attribute_Damage, ScaledDamage);
-		
-        Projectile->DamageEffectSpecHandle = SpecHandle;
+		//  //创建技能实例后，设置技能数据
+		//  const UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwningActorFromActorInfo());
+		//  //生成技能效果上下文句柄
+        //FGameplayEffectContextHandle EffectContextHandle = SourceASC->MakeEffectContext();
+		//
+		//  EffectContextHandle.SetAbility(this);//设置技能
+		//  EffectContextHandle.AddSourceObject(Projectile);//设置技能效果的源对象
+		// // //添加Actor
+		//  TArray<TWeakObjectPtr<AActor>> Actors;
+		//  Actors.Add(Projectile);
+		//  EffectContextHandle.AddActors(Actors);
+		//  //添加命中效果
+		//  FHitResult HitResult;
+		//  HitResult.Location = ProjectileTargetLocation;
+		//  EffectContextHandle.AddHitResult(HitResult);
+		//  //添加技能触发位置
+		//  EffectContextHandle.AddOrigin(ProjectileTargetLocation);
+		//
+		//  const FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, GetAbilityLevel(), EffectContextHandle);
+  //
+		//  //获取标签单例
+  //        FAureGameplayTags GameplayTags = FAureGameplayTags::Get();
+		//  //依据等级获取伤害值
+		//  // for (auto& Pair :DamageTypes)
+		//  // {
+		//  // 	const float ScaledDamage = Pair.Value.GetValueAtLevel(GetAbilityLevel()) ;
+		//  // 	GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("火球术伤害: %f"), ScaledDamage));
+		//  // 	UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, Pair.Key, ScaledDamage);
+		//  // }
+		// const float ScaledDamage = Damage.GetValueAtLevel(GetAbilityLevel()) ;
+		// GEngine->AddOnScreenDebugMessage(-1, 5.f, FColor::Green, FString::Printf(TEXT("火球术伤害: %f"), ScaledDamage));
+		// UAbilitySystemBlueprintLibrary::AssignTagSetByCallerMagnitude(SpecHandle, DamageType, ScaledDamage);
+  //        
+		//
+		// Projectile->DamageEffectSpecHandle = SpecHandle;
+		Projectile->DamageEffectParams = MakeDamageEffectParamsFromClassDefaults();
 		Projectile->FinishSpawning(SpawnTransfrom);
 		
-	}
+	
 }
